@@ -209,16 +209,13 @@ class Item(collections.Mapping):
         should be acquired.
         fail_if can be either None, "exists", or "missing".
         """
-        self._fd, is_shared = self.directory.cache.get(self.full_filename,
-                                                       (None, False))
+        self._fd, is_shared = None, False
         if shared_lock:
             if self._fd is None:
                 # Open it with a shared lock
                 self._fd = os.open(self.full_filename,
                                    os.O_RDONLY | os.O_SYNC)
                 fcntl.flock(self._fd, fcntl.LOCK_SH)
-                self.directory.cache[self.full_filename] = (self._fd,
-                                                            shared_lock)
             # Do nothing if we already have a file descriptor
         else:
             if (self._fd is None or
@@ -243,7 +240,6 @@ class Item(collections.Mapping):
                                    self.directory.file_mode)
                 os.umask(umask)
             fcntl.flock(self._fd, fcntl.LOCK_EX)
-            self.directory.cache[self.full_filename] = (self._fd, shared_lock)
         return self._fd
 
     def read(self):
@@ -304,7 +300,6 @@ class StructuredDirectory(object):
         self.root_dir = unicode_(root_dir)
         self.pattern = unicode_(pattern)
         # Cache for file descriptors.
-        self.cache = {}
         parts_re, parts_properties = _parse_pattern(self.pattern)
         self.file_mode = file_mode
         self._path_parts_re = parts_re
@@ -380,15 +375,6 @@ class StructuredDirectory(object):
             fixed.append((fixed_part, fixed_part_values))
 
         return self._walk((), (), fixed)
-
-    def clear_cache_entry(self, key):
-        value, shared = self.cache.pop(key)
-        os.close(value)
-
-    def clear_cache(self, only_shared=False):
-        for key, (value, shared) in list(self.cache.items()):
-            if (not only_shared) or shared:
-                self.clear_cache_entry(key)
 
     def _walk(self, previous_path_parts, previous_values, fixed):
         """

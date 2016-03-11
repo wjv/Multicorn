@@ -386,7 +386,6 @@ class FilesystemFdw(TransactionAwareForeignDataWrapper):
     def _post_xact_cleanup(self):
         self._init_transaction_state()
         self.invisible_files = set()
-        self.structured_directory.clear_cache(only_shared=False)
         self.updated_content = {}
 
     def pre_commit(self):
@@ -400,13 +399,9 @@ class FilesystemFdw(TransactionAwareForeignDataWrapper):
                 else:
                     fd = newitem.open(shared_lock=False)
                     os.unlink(olditem.full_filename)
-                    self.structured_directory.clear_cache_entry(
-                        olditem.full_filename)
                 newitem.write(fd)
             elif operation == 'delete':
                 values.remove()
-                self.structured_directory.clear_cache_entry(
-                    values.full_filename)
         self._post_xact_cleanup()
 
     def rollback(self):
@@ -426,7 +421,7 @@ class FilesystemFdw(TransactionAwareForeignDataWrapper):
         return self.filename_column
 
     def end_scan(self):
-        self.structured_directory.clear_cache(only_shared=True)
+        pass
 
 # For compatibility
 from multicorn.fsfdw.restfsfdw import ReStructuredTextFdw
