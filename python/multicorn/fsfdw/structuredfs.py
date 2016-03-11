@@ -254,7 +254,7 @@ class Item(collections.Mapping):
         """
         fd = self.open(True, fail_if='missing')
         os.lseek(fd, 0, os.SEEK_SET)
-        iof = io.open(fd, 'rb', closefd=False)
+        iof = io.open(fd, 'rb', closefd=True)
         content = iof.read()
         iof.close()
         return content
