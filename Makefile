@@ -10,7 +10,7 @@ DOCS         = $(wildcard $(srcdir)/doc/*.md)
 EXTENSION    = multicorn
 EXTVERSION   = $(shell grep default_version $(srcdir)/$(EXTENSION).control | sed -e "s/default_version[[:space:]]*=[[:space:]]*'\([^']*\)'/\1/")
 
-all: preflight-check sql/$(EXTENSION)--$(EXTVERSION).sql
+all: sql/$(EXTENSION)--$(EXTVERSION).sql
 
 directories.stamp:
 	[ -d sql ] || mkdir sql
@@ -23,9 +23,6 @@ install: python_code
 
 sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).sql directories.stamp
 	cp $< $@
-
-preflight-check:
-	$(srcdir)/preflight-check.sh
 
 python_code: setup.py
 	cp $(srcdir)/setup.py ./setup--$(EXTVERSION).py
